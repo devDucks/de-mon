@@ -5,7 +5,7 @@ You need to have a secure token that can be requested contacting me at [this ema
 
 I will create a new token for you that will allow you to have access to a simple dashboard hosted on my server, as soon as I have a better implementation of the server side it will be added to this repository so you can host it yourself elsewhere. :)
 
-If you just want an executable to run on your Astroberry distribution get the compiled package from [here](https://github.com/aktasway-it/DE-Mon/releases)
+If you just want an executable to run on your Astroberry distribution get the compiled package from [here](https://github.com/aktasway-it/de-mon/releases)
 
 If you instead want to run it as a Python application, just clone the repository wherever you like, open the terminal and navigate to the folder where you cloned the project and then run the command:
 

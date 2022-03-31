@@ -1,0 +1,8 @@
+__pycache__/
+.idea
+*.spec
+*.json
+*.zip
+*.analyze
+build/
+dist/

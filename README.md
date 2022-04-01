@@ -5,13 +5,15 @@ You need to have a secure token that can be requested contacting me at [this ema
 
 I will create a new token for you that will allow you to have access to a simple dashboard hosted on my server, as soon as I have a better implementation of the server side it will be added to this repository so you can host it yourself elsewhere. :)
 
+DE-Mon has also a very primitive web server that listens on your local address using the port 5000, however it's more for debugging and future development that for real monitoring from the browser.
+
 If you just want an executable to run on your Astroberry distribution get the compiled package from [here](https://github.com/aktasway-it/de-mon/releases)
 
-If you instead want to run it as a Python application, just clone the repository wherever you like, open the terminal and navigate to the folder where you cloned the project and then run the command:
+If you instead want to run it as a Python application, just clone the repository wherever you like and run the script. You'll be notified if some dependencies are not met, but it should be enough to run the command:
 
-`pip install pyside6`
+`pip install pyside6 flask requests`
 
-Once installed the dependency you don't need to run this command ever again, obviously. :)
+Once installed the dependencies you don't need to run this command ever again, obviously. :)
 
 To launch the application either double click **demon** or from the terminal run:
 

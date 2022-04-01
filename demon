@@ -1,14 +1,27 @@
 #!/usr/bin/env python
 import sys
 import json
+import threading
+import socket
 import requests
 import zlib
 import glob
 import os
 from datetime import datetime, timedelta
-from PySide6 import QtCore, QtWidgets
-from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QPlainTextEdit
+
+try:
+    from flask import Flask, request, jsonify
+    from PySide6 import QtCore, QtWidgets
+    from PySide6.QtCore import QTimer
+    from PySide6.QtWidgets import QPlainTextEdit
+except ModuleNotFoundError as ex:
+    print('DE-Mon requires Python 3.6 or later with the modules PyQT6 and Flask')
+    print('Run the following command to install the dependencies:')
+    print('pip install pyside6 flask requests')
+    print('\n\n')
+    print('If you don\'t have pip installed run:')
+    print('pip install --user --upgrade pip')
+    exit(0)
 
 
 class DataProcessor:
@@ -72,8 +85,8 @@ class DataProcessor:
 
     def parse_file(self, filename=''):
         analyze_file = self.get_latest_analyze_file() if filename == '' else filename
-        self.print_method(f"Parsing {analyze_file}")
-        self.print_method(f'Session started at: {self._dt_start_time}')
+        self.logger(f"Parsing {analyze_file}")
+        self.logger(f'Session started at: {self._dt_start_time}')
         file = open(analyze_file, 'r')
         while True:
             line = file.readline()
@@ -84,10 +97,16 @@ class DataProcessor:
         for sensor in self._data:
             sensor_data = self._data[sensor][-1] if len(self._data[sensor]) > 0 else None
             if sensor_data is not None:
-                self.print_method(f'{sensor}: {self._data[sensor][-1]}')
+                self.logger(f'{sensor}: {self._data[sensor][-1]}')
 
     def get_data(self):
         return self._data
+
+    def set_logger(self, logger):
+        self.logger = logger
+
+    def set_analyze_base_path(self, analyze_base_path):
+        self.analyze_base_path = analyze_base_path
 
     def reset_data(self):
         self._data = {
@@ -99,7 +118,7 @@ class DataProcessor:
         }
 
     def update_remote_data(self, token):
-        with open('output.json', 'w') as output_file:
+        with open('demon.json', 'w') as output_file:
             json.dump(self.get_data(), output_file)
         try:
             request_body = zlib.compress(json.dumps(self.get_data()).encode('utf-8'))
@@ -112,13 +131,12 @@ class DataProcessor:
             print(f"Something went wrong while uploading the data:{str(e)}")
             return False
 
-    @staticmethod
-    def get_latest_analyze_file():
-        list_of_files = glob.glob('/home/astroberry/.local/share/kstars/analyze/*.analyze')
+    def get_latest_analyze_file(self):
+        list_of_files = glob.glob(f'{self.analyze_base_path}*.analyze')
         latest_file = max(list_of_files, key=os.path.getctime)
         return latest_file
 
-    def __init__(self, print_method):
+    def __init__(self):
         self._data_types = {
             'AnalyzeStartTime': self.start_time,
             'Temperature': self.sensor_temperature,
@@ -135,34 +153,61 @@ class DataProcessor:
             'humidity': []
         }
         self._dt_start_time = datetime.now()
-        self.print_method = print_method
+        self.analyze_base_path = '/home/astroberry/.local/share/kstars/analyze/'
+        self.logger = print
 
 
 class DEMonWidget(QtWidgets.QWidget):
-    def __init__(self):
+    def __init__(self, data_processor):
         super().__init__()
-        self.token_input = QtWidgets.QLineEdit("Enter your DE-Mon token here...")
+        self.token_input = QtWidgets.QLineEdit()
+        self.token_input.setPlaceholderText('Enter your DE-Mon token here...')
+        self.analyze_files_path = QtWidgets.QLineEdit()
+        self.analyze_files_path.setPlaceholderText('Path to analyze files folder, default is: /home/astroberry/.local/share/kstars/analyze')
         self.button = QtWidgets.QPushButton("Start monitoring")
         self.clear_button = QtWidgets.QPushButton("Clear logs")
         self.output_log = QPlainTextEdit(self)
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.token_input)
+        self.layout.addWidget(self.analyze_files_path)
         self.layout.addWidget(self.button)
         self.layout.addWidget(self.clear_button)
         self.layout.addWidget(self.output_log)
         self.button.clicked.connect(self.start_monitoring)
         self.clear_button.clicked.connect(self.output_log.clear)
 
-        self.data_processor = DataProcessor(self.__print_log)
+        self.data_processor = data_processor
+        self.data_processor.set_logger(self.__print_log)
         self.monitor_timer = QTimer()
         self.monitor_timer.setInterval(15000)
         self.monitor_timer.timeout.connect(self.monitor)
 
-    def close(self):
+    def closeEvent(self, event):
+        os.remove('demon.json')
         self.monitor_timer.stop()
+
+    def get_ip(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(0)
+        try:
+            # doesn't even have to be reachable
+            s.connect(('10.255.255.255', 1))
+            ip = s.getsockname()[0]
+        except Exception:
+            ip = '127.0.0.1'
+        finally:
+            s.close()
+        return ip
 
     @QtCore.Slot()
     def start_monitoring(self):
+        token = self.token_input.text().strip()
+        self.token_input.setText(token)
+        if token == '':
+            self.__print_log("Please enter your DE-Mon token before starting to monitor!")
+            return
+
+        self.data_processor.set_analyze_base_path(self.analyze_files_path)
         self.monitor_timer.start()
 
         self.button.setText("Stop monitoring")
@@ -170,6 +215,8 @@ class DEMonWidget(QtWidgets.QWidget):
         self.button.clicked.connect(self.stop_monitoring)
 
         self.__print_log("Monitoring started...")
+        self.__print_log(f"Open your browser and go to <a href='https://demon.astropills.it/?stk={token}'>https://demon.astropills.it/?stk={token}</a> to get access to your DE-Mon dashboard.")
+        self.__print_log(f"A local server is also running on <a href='{self.get_ip()}:5000'>{self.get_ip()}:5000</a> for development purposes.")
 
     @QtCore.Slot()
     def stop_monitoring(self):
@@ -184,7 +231,7 @@ class DEMonWidget(QtWidgets.QWidget):
         return datetime.now().strftime('%d/%m/%Y %H:%M:%S')
 
     def __print_log(self, text):
-        self.output_log.appendPlainText(self.__get_timestamp() + ' - ' + text)
+        self.output_log.appendHtml(f'<b>{self.__get_timestamp()}</b> - {text}')
 
     def monitor(self):
         try:
@@ -200,9 +247,57 @@ class DEMonWidget(QtWidgets.QWidget):
             self.__print_log(f"Something went wrong:{str(e)}")
 
 
+def start_server():
+    server = Flask(__name__)
+    kwargs = {'host': '0.0.0.0', 'port': 5000, 'threaded': True, 'use_reloader': False, 'debug': False}
+    threading.Thread(target=server.run, daemon=True, kwargs=kwargs).start()
+
+    def read_data_file():
+        try:
+            with open('demon.json', 'r') as f:
+                data = json.load(f)
+                return data
+        except FileNotFoundError as ex:
+            return None
+
+    def error_route():
+        return "<h1>Monitoring not running!</h1>"
+
+    @server.route('/', methods=['GET'])
+    def dashboard():
+        data = read_data_file()
+        if data is None:
+            return error_route()
+        response = {}
+        for sensor in data:
+            response[sensor] = data[sensor][-1] if len(data[sensor]) > 0 else {}
+        return response
+
+    @server.route('/all', methods=['GET'])
+    def all_data():
+        data = read_data_file()
+        if data is None:
+            return error_route()
+        return data
+
+    @server.route('/sensor', methods=['GET'])
+    def sensor_data():
+        data = read_data_file()
+        if data is None:
+            return error_route()
+        if 'id' in request.args:
+            sensor_id = str(request.args['id'])
+            if sensor_id in data:
+                return { sensor_id: data[sensor_id] }
+
+
 if __name__ == '__main__':
     app = QtWidgets.QApplication([])
-    widget = DEMonWidget()
+    app.setApplicationName('DE-Mon')
+
+    start_server()
+    dp = DataProcessor()
+    widget = DEMonWidget(dp)
     widget.resize(800, 600)
     widget.show()
     sys.exit(app.exec())

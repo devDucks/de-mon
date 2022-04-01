@@ -11,7 +11,7 @@ If you just want an executable to run on your Astroberry distribution get the co
 
 If you instead want to run it as a Python application on your Raspberry, just clone the repository wherever you like and run the script. You'll be notified if some dependencies are not met, but it should be enough to run the following commands:
 
-`sudo apt upgrade && sudo apt install python3-pyqt5`
+`sudo apt update && sudo apt install python3-pyqt5`
 
 `python3 -m pip install --upgrade pip`
 

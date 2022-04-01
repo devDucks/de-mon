@@ -1,5 +1,5 @@
 # DE-Mon - Ekos Monitoring Tool for Astrophotography
-DE-Mon is a simple service that can run on any machine using the [Astroberry](https://www.astroberry.io/) linux distribution that enables the user to remotely monitor via browser the session progress during the night.
+DE-Mon is a simple service that can run on any Linux system using the astrophotography imaging suite Ekos, including [Astroberry](https://www.astroberry.io/) and StellarMate, enabling the user to remotely monitor via browser the session progress during the night.
 
 You need to have a secure token that can be requested contacting me at [this email address](mailto:astropills.it@gmail.com).
 
@@ -7,7 +7,7 @@ I will create a new token for you that will allow you to have access to a simple
 
 DE-Mon has also a very primitive web server that listens on your local address using the port 5000, however it's more for debugging and future development that for real monitoring from the browser.
 
-If you just want an executable to run on your Astroberry distribution get the compiled package from [here](https://github.com/aktasway-it/de-mon/releases).
+If you just want an executable to run on your Linux distribution get the compiled package from [here](https://github.com/aktasway-it/de-mon/releases).
 
 If you instead want to run it as a Python application on your Raspberry, just clone the repository wherever you like and run the script. You'll be notified if some dependencies are not met, but it should be enough to run the following commands:
 

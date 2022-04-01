@@ -235,7 +235,7 @@ class DEMonWidget(QtWidgets.QWidget):
 
     def monitor(self):
         try:
-            self.data_processor.parse_file('ekos.analyze')
+            self.data_processor.parse_file()
             data_updated = self.data_processor.update_remote_data(self.token_input.text())
             self.data_processor.reset_data()
             if data_updated:

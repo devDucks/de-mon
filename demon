@@ -11,13 +11,13 @@ from datetime import datetime, timedelta
 
 try:
     from flask import Flask, request, jsonify
-    from PySide6 import QtCore, QtWidgets
-    from PySide6.QtCore import QTimer
-    from PySide6.QtWidgets import QPlainTextEdit
+    from PyQt5 import QtCore, QtWidgets
+    from PyQt5.QtCore import QTimer
+    from PyQt5.QtWidgets import QPlainTextEdit
 except ModuleNotFoundError as ex:
     print('DE-Mon requires Python 3.6 or later with the modules PyQT6 and Flask')
     print('Run the following command to install the dependencies:')
-    print('pip install pyside6 flask requests')
+    print('pip install PyQt5 flask requests')
     print('\n\n')
     print('If you don\'t have pip installed run:')
     print('pip install --user --upgrade pip')
@@ -199,7 +199,7 @@ class DEMonWidget(QtWidgets.QWidget):
             s.close()
         return ip
 
-    @QtCore.Slot()
+    @QtCore.pyqtSlot()
     def start_monitoring(self):
         token = self.token_input.text().strip()
         self.token_input.setText(token)
@@ -218,7 +218,7 @@ class DEMonWidget(QtWidgets.QWidget):
         self.__print_log(f"Open your browser and go to <a href='https://demon.astropills.it/?stk={token}'>https://demon.astropills.it/?stk={token}</a> to get access to your DE-Mon dashboard.")
         self.__print_log(f"A local server is also running on <a href='{self.get_ip()}:5000'>{self.get_ip()}:5000</a> for development purposes.")
 
-    @QtCore.Slot()
+    @QtCore.pyqtSlot()
     def stop_monitoring(self):
         self.monitor_timer.stop()
 

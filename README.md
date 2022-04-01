@@ -11,7 +11,7 @@ If you just want an executable to run on your Astroberry distribution get the co
 
 If you instead want to run it as a Python application, just clone the repository wherever you like and run the script. You'll be notified if some dependencies are not met, but it should be enough to run the command:
 
-`pip install pyside6 flask requests`
+`pip install PyQt5 flask requests`
 
 Once installed the dependencies you don't need to run this command ever again, obviously. :)
 

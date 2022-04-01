@@ -132,7 +132,7 @@ class DataProcessor:
             return False
 
     def get_latest_analyze_file(self):
-        list_of_files = glob.glob(f'{self.analyze_base_path}*.analyze')
+        list_of_files = glob.glob(f'{self.analyze_base_path}/*.analyze')
         latest_file = max(list_of_files, key=os.path.getctime)
         return latest_file
 
@@ -153,7 +153,7 @@ class DataProcessor:
             'humidity': []
         }
         self._dt_start_time = datetime.now()
-        self.analyze_base_path = '/home/astroberry/.local/share/kstars/analyze/'
+        self.analyze_base_path = '/home/astroberry/.local/share/kstars/analyze'
         self.logger = print
 
 

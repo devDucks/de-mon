@@ -183,7 +183,10 @@ class DEMonWidget(QtWidgets.QWidget):
         self.monitor_timer.timeout.connect(self.monitor)
 
     def closeEvent(self, event):
-        os.remove('demon.json')
+        try:
+            os.remove('demon.json')
+        except FileNotFoundError:
+            print('Local data does not exist, nothing to remove')
         self.monitor_timer.stop()
 
     def get_ip(self):

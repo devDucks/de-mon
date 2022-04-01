@@ -85,6 +85,11 @@ class DataProcessor:
 
     def parse_file(self, filename=''):
         analyze_file = self.get_latest_analyze_file() if filename == '' else filename
+
+        if not analyze_file:
+            self.logger('No ekos .analyze file(s) found.')
+            return
+
         self.logger(f"Parsing {analyze_file}")
         self.logger(f'Session started at: {self._dt_start_time}')
         file = open(analyze_file, 'r')
@@ -133,7 +138,11 @@ class DataProcessor:
 
     def get_latest_analyze_file(self):
         list_of_files = glob.glob(f'{self.analyze_base_path}*.analyze')
-        latest_file = max(list_of_files, key=os.path.getctime)
+        try:
+            latest_file = max(list_of_files, key=os.path.getctime)
+        except ValueError:  # max raises an exception if the iterable is empty
+            latest_file = None
+
         return latest_file
 
     def __init__(self):
@@ -244,7 +253,9 @@ class DEMonWidget(QtWidgets.QWidget):
             if data_updated:
                 self.__print_log('Ekos data parsed and uploaded correctly!')
             else:
-                self.__print_log('Could not update the data! Did you provide a valid token?')
+                self.__print_log(
+                    'Could not update the data! Did you provide a valid token? Do you have a *.analyze file available?'
+                )
         except Exception as e:
             print(f"Something went wrong:{str(e)}")
             self.__print_log(f"Something went wrong:{str(e)}")

@@ -138,6 +138,7 @@ class DataProcessor:
 
     def get_latest_analyze_file(self):
         list_of_files = glob.glob(f'{self.analyze_base_path}*.analyze')
+
         try:
             latest_file = max(list_of_files, key=os.path.getctime)
         except ValueError:  # max raises an exception if the iterable is empty
@@ -162,7 +163,7 @@ class DataProcessor:
             'humidity': []
         }
         self._dt_start_time = datetime.now()
-        self.analyze_base_path = '/home/astroberry/.local/share/kstars/analyze/'
+        self.analyze_base_path = '/home/astroberry/.local/share/kstars/analyze'
         self.logger = print
 
 
@@ -172,7 +173,8 @@ class DEMonWidget(QtWidgets.QWidget):
         self.token_input = QtWidgets.QLineEdit()
         self.token_input.setPlaceholderText('Enter your DE-Mon token here...')
         self.analyze_files_path = QtWidgets.QLineEdit()
-        self.analyze_files_path.setPlaceholderText('Path to analyze files folder, default is: /home/astroberry/.local/share/kstars/analyze')
+        self.analyze_files_path.setPlaceholderText(
+            'Path to analyze files folder, if blank will use the default: /home/astroberry/.local/share/kstars/analyze')
         self.button = QtWidgets.QPushButton("Start monitoring")
         self.clear_button = QtWidgets.QPushButton("Clear logs")
         self.output_log = QPlainTextEdit(self)
@@ -219,7 +221,10 @@ class DEMonWidget(QtWidgets.QWidget):
             self.__print_log("Please enter your DE-Mon token before starting to monitor!")
             return
 
-        self.data_processor.set_analyze_base_path(self.analyze_files_path)
+        analyze_files_path = self.analyze_files_path.text().strip()
+        if analyze_files_path != '':
+            self.data_processor.set_analyze_base_path(self.analyze_files_path.text())
+
         self.monitor_timer.start()
 
         self.button.setText("Stop monitoring")
@@ -227,8 +232,10 @@ class DEMonWidget(QtWidgets.QWidget):
         self.button.clicked.connect(self.stop_monitoring)
 
         self.__print_log("Monitoring started...")
-        self.__print_log(f"Open your browser and go to <a href='https://demon.astropills.it/?stk={token}'>https://demon.astropills.it/?stk={token}</a> to get access to your DE-Mon dashboard.")
-        self.__print_log(f"A local server is also running on <a href='{self.get_ip()}:5000'>{self.get_ip()}:5000</a> for development purposes.")
+        self.__print_log(
+            f"Open your browser and go to <a href='https://demon.astropills.it/?stk={token}'>https://demon.astropills.it/?stk={token}</a> to get access to your DE-Mon dashboard.")
+        self.__print_log(
+            f"A local server is also running on <a href='{self.get_ip()}:5000'>{self.get_ip()}:5000</a> for development purposes.")
 
     @QtCore.pyqtSlot()
     def stop_monitoring(self):
@@ -271,7 +278,7 @@ def start_server():
             with open('demon.json', 'r') as f:
                 data = json.load(f)
                 return data
-        except FileNotFoundError as ex:
+        except FileNotFoundError:
             return None
 
     def error_route():
@@ -285,14 +292,14 @@ def start_server():
         response = {}
         for sensor in data:
             response[sensor] = data[sensor][-1] if len(data[sensor]) > 0 else {}
-        return response
+        return json.dumps(response)
 
     @server.route('/all', methods=['GET'])
     def all_data():
         data = read_data_file()
         if data is None:
             return error_route()
-        return data
+        return json.dumps(data)
 
     @server.route('/sensor', methods=['GET'])
     def sensor_data():
@@ -302,7 +309,7 @@ def start_server():
         if 'id' in request.args:
             sensor_id = str(request.args['id'])
             if sensor_id in data:
-                return { sensor_id: data[sensor_id] }
+                return json.dumps({sensor_id: data[sensor_id]})
 
 
 if __name__ == '__main__':

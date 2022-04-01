@@ -7,11 +7,11 @@ I will create a new token for you that will allow you to have access to a simple
 
 DE-Mon has also a very primitive web server that listens on your local address using the port 5000, however it's more for debugging and future development that for real monitoring from the browser.
 
-If you just want an executable to run on your Astroberry distribution get the compiled package from [here](https://github.com/aktasway-it/de-mon/releases). Beware, running the built package on Raspberry could be quite slow in launching, takes about 5-10s...
+If you just want an executable to run on your Astroberry distribution get the compiled package from [here](https://github.com/aktasway-it/de-mon/releases).
 
 If you instead want to run it as a Python application on your Raspberry, just clone the repository wherever you like and run the script. You'll be notified if some dependencies are not met, but it should be enough to run the following commands:
 
-`sudo apt upgrade && sudo apt install python3-pyqt5`
+`sudo apt update && sudo apt install python3-pyqt5`
 
 `python3 -m pip install --upgrade pip`
 
